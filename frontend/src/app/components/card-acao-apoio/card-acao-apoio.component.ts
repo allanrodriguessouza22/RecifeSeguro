@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertaTerritorial } from '../../models/alerta.model';
 
@@ -28,9 +28,26 @@ import { AlertaTerritorial } from '../../models/alerta.model';
           </div>
         </div>
 
-        <p class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed mb-5 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+        <p class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed mb-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
           {{ alerta.acao_segura }}
         </p>
+
+        <!-- Rota de Fuga Hiperlocal Específica do Microterritório -->
+        @if (alerta.rota_fuga_segura) {
+          <div class="mb-5 p-3.5 rounded-xl bg-amber-950/40 border-2 border-amber-400/50 flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-amber-400 text-slate-950 shrink-0 font-black text-xs">
+              ROTA
+            </div>
+            <div>
+              <span class="block text-xs font-black uppercase text-amber-300 tracking-wider">
+                Rota de Fuga Segura (Hiperlocal)
+              </span>
+              <p class="text-sm sm:text-base font-bold text-white mt-0.5">
+                {{ alerta.rota_fuga_segura }}
+              </p>
+            </div>
+          </div>
+        }
 
         <!-- Ponto de Apoio Oficial da Prefeitura do Recife -->
         <div class="rounded-xl bg-sky-950/60 border border-sky-500/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -49,6 +66,15 @@ import { AlertaTerritorial } from '../../models/alerta.model';
           </div>
 
           <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              (click)="abrirCompartilhamento.emit()"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-md shadow-amber-950 transition cursor-pointer"
+              aria-label="Compartilhar este alerta sem internet via QR Code ou SMS"
+            >
+              <span>⚡ Transmitir Sem Internet</span>
+            </button>
+
             <a
               [href]="obterLinkMapa(alerta.ponto_apoio, alerta.territorio)"
               target="_blank"
@@ -61,10 +87,10 @@ import { AlertaTerritorial } from '../../models/alerta.model';
 
             <a
               href="tel:199"
-              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm bg-amber-400 text-slate-950 hover:bg-amber-300 transition"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-600 transition"
               aria-label="Ligar 199 para a Defesa Civil do Recife"
             >
-              <span>Ligar 199 (Defesa Civil)</span>
+              <span>Ligar 199</span>
             </a>
           </div>
         </div>
@@ -74,6 +100,7 @@ import { AlertaTerritorial } from '../../models/alerta.model';
 })
 export class CardAcaoApoioComponent {
   @Input({ required: true }) alerta!: AlertaTerritorial;
+  @Output() abrirCompartilhamento = new EventEmitter<void>();
 
   obterLinkMapa(pontoApoio: string, territorio: string): string {
     const query = encodeURIComponent(`${pontoApoio}, ${territorio}, Recife - PE`);

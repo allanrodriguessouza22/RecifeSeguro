@@ -15,9 +15,9 @@ import { AlertaTerritorial } from '../../models/alerta.model';
         aria-live="polite"
         aria-label="Semáforo de risco climático atual"
       >
-        <!-- Topo do Semáforo: Selo de Nível de Risco + Ecossistema -->
+        <!-- Topo do Semáforo: Selo de Nível de Risco + Microterritório + Ecossistema -->
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div class="flex items-center gap-2.5">
+          <div class="flex flex-wrap items-center gap-2">
             <span
               [ngClass]="obterClassesPontoSemaforo(alerta.nivel_risco)"
               class="inline-block h-4 w-4 rounded-full ring-4"
@@ -29,22 +29,40 @@ import { AlertaTerritorial } from '../../models/alerta.model';
             >
               RISCO {{ alerta.nivel_risco }}
             </span>
+
+            @if (alerta.recebido_via_p2p) {
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-amber-400 text-slate-950 shadow">
+                ⚡ Malha P2P Offline
+              </span>
+            }
           </div>
 
-          <span class="text-xs sm:text-sm font-semibold px-3 py-1 rounded-lg bg-black/30 text-white border border-white/15">
-            Ecossistema: {{ alerta.ecossistema }}
-          </span>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            @if (alerta.bairro) {
+              <span class="font-bold px-2.5 py-1 rounded-lg bg-black/40 text-amber-300 border border-amber-400/30">
+                Bairro: {{ alerta.bairro }}
+              </span>
+            }
+            <span class="font-semibold px-2.5 py-1 rounded-lg bg-black/30 text-white border border-white/15">
+              {{ alerta.topografia_risco || alerta.ecossistema }}
+            </span>
+          </div>
         </div>
 
         <!-- Localidade e Indicadores Climáticos -->
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-5 pb-4 border-b border-white/20">
           <div>
             <p class="text-xs uppercase tracking-widest text-white/80 font-semibold">
-              Território Monitorado
+              Microterritório Monitorado
             </p>
             <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight mt-0.5">
-              {{ alerta.territorio }}
+              {{ alerta.microterritorio || alerta.territorio }}
             </h2>
+            @if (alerta.microterritorio && alerta.territorio && alerta.microterritorio !== alerta.territorio) {
+              <p class="text-xs text-white/70 mt-0.5">
+                Região de referência: {{ alerta.territorio }}
+              </p>
+            }
           </div>
 
           <div class="flex items-center gap-3">

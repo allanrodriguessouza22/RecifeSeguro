@@ -9,11 +9,15 @@ class TerritorioRisco(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nome_local = Column(String(120), nullable=False)
+    bairro = Column(String(80), nullable=True)
+    microterritorio = Column(String(120), nullable=True)
+    topografia_risco = Column(String(60), nullable=True)
     tipo_ecossistema = Column(String(50), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     ponto_apoio_proximo = Column(String(200), nullable=False)
     fator_vulnerabilidade = Column(Text, nullable=True)
+    rota_fuga_segura = Column(Text, nullable=True)
 
     alertas = relationship(
         "AlertaGerado",
@@ -31,6 +35,9 @@ class AlertaGerado(Base):
         ForeignKey("territorios_risco.id", ondelete="CASCADE"),
         nullable=False,
     )
+    bairro = Column(String(80), nullable=True)
+    microterritorio = Column(String(120), nullable=True)
+    rota_fuga_segura = Column(Text, nullable=True)
     precipitacao_mm = Column(Float, nullable=False)
     temperatura_c = Column(Float, nullable=True)
     nivel_risco = Column(String(20), nullable=False)

@@ -6,6 +6,8 @@ import { AlertaTerritorial, Territorio } from './models/alerta.model';
 import { CardRiscoComponent } from './components/card-risco/card-risco.component';
 import { CardAcaoApoioComponent } from './components/card-acao-apoio/card-acao-apoio.component';
 import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/card-territorio-vivo.component';
+import { ModalCompartilharOfflineComponent } from './components/modal-compartilhar-offline/modal-compartilhar-offline.component';
+import { MapaTerritorialComponent } from './components/mapa-territorial/mapa-territorial.component';
 
 @Component({
   selector: 'app-root',
@@ -16,13 +18,15 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
     CardRiscoComponent,
     CardAcaoApoioComponent,
     CardTerritorioVivoComponent,
+    ModalCompartilharOfflineComponent,
+    MapaTerritorialComponent,
   ],
   template: `
     <div class="min-h-screen bg-slate-950 text-slate-50 flex flex-col justify-between">
-      <!-- 1. CABEÇALHO ACESSÍVEL COM STATUS ONLINE/OFFLINE E SELETOR DE COMUNIDADE -->
+      <!-- 1. CABEÇALHO TÁTICO COM STATUS ONLINE/OFFLINE E MALHA P2P -->
       <header class="border-b border-slate-800 bg-slate-900/95 sticky top-0 z-30 backdrop-blur">
-        <div class="max-w-3xl mx-auto px-4 py-4">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="max-w-4xl mx-auto px-4 py-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <div class="h-11 w-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-md shadow-emerald-950 shrink-0" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
@@ -34,92 +38,92 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
                   Recife Seguro
                 </h1>
                 <p class="text-xs sm:text-sm text-emerald-300 font-semibold mt-1">
-                  T.A.D.C. • Tradutor de Alertas da Defesa Civil
+                  T.A.D.C. • Mapa Interativo & Malha de Emergência Offline
                 </p>
               </div>
             </div>
 
-            <!-- Selo Online / Offline (Suporte PWA) -->
-            <div class="flex items-center gap-2">
+            <!-- Controles de Conexão (Pitch) e Malha P2P -->
+            <div class="flex flex-wrap items-center gap-2">
               @if (modoSimulacaoAtivo) {
-                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-400 text-slate-950">
+                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-400 text-slate-950 shadow">
                   Modo Simulação
                 </span>
               }
-              <span
-                [ngClass]="estaOnline
-                  ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50'
-                  : 'bg-amber-950 text-amber-200 border-amber-400/60'"
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border"
-                role="status"
-                aria-live="polite"
-              >
-                <span
-                  [ngClass]="estaOnline ? 'bg-emerald-400' : 'bg-amber-400'"
-                  class="h-2.5 w-2.5 rounded-full"
-                  aria-hidden="true"
-                ></span>
-                {{ estaOnline ? 'Online • Open-Meteo' : 'Offline • Cache Local' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Seletor de Território / Comunidade de Recife -->
-          <div class="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800">
-            <label
-              for="seletor-territorio"
-              class="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300 mb-2"
-            >
-              Selecione sua Comunidade / Território em Recife:
-            </label>
-            <div class="flex flex-col sm:flex-row gap-2.5">
-              <select
-                id="seletor-territorio"
-                [(ngModel)]="territorioSelecionadoId"
-                (ngModelChange)="selecionarTerritorio($event)"
-                aria-label="Selecionar bairro ou comunidade monitorada em Recife"
-                class="w-full rounded-xl bg-slate-900 border-2 border-slate-700 text-white font-bold text-base px-4 py-3 focus:border-emerald-400 transition cursor-pointer"
-              >
-                @for (t of territorios; track t.id) {
-                  <option [ngValue]="t.id">
-                    {{ t.nome_local }} — ({{ t.tipo_ecossistema }})
-                  </option>
-                }
-              </select>
 
               <button
                 type="button"
-                (click)="atualizarTempoReal()"
-                [disabled]="carregando"
-                aria-label="Atualizar dados meteorológicos em tempo real"
-                class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-extrabold text-sm bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-50 transition cursor-pointer"
+                (click)="alternarQuedaRedeSimulada()"
+                [attr.aria-pressed]="modoQuedaRedeSimulado"
+                [ngClass]="conexaoAtiva
+                  ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50 hover:border-emerald-400'
+                  : 'bg-red-950 text-red-200 border-red-500/70 hover:border-red-400 animate-pulse'"
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border transition cursor-pointer"
+                title="Clique para simular queda de internet para o Pitch"
               >
-                <span>{{ carregando ? 'Atualizando...' : 'Atualizar Agora' }}</span>
+                <span
+                  [ngClass]="conexaoAtiva ? 'bg-emerald-400' : 'bg-red-400'"
+                  class="h-2.5 w-2.5 rounded-full"
+                  aria-hidden="true"
+                ></span>
+                {{ conexaoAtiva ? 'Online • Open-Meteo' : 'Offline • Sem Sinal' }}
+              </button>
+
+              <button
+                type="button"
+                (click)="abrirModalP2P()"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 shadow cursor-pointer transition"
+                aria-label="Abrir central de transmissão sem internet"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                </svg>
+                <span>Malha P2P</span>
               </button>
             </div>
-
-            <!-- Atalhos rápidos para os 3 territórios principais do Recife -->
-            <div class="flex flex-wrap gap-2 mt-3" role="group" aria-label="Atalhos rápidos de comunidades">
-              @for (t of territorios.slice(0, 3); track t.id) {
-                <button
-                  type="button"
-                  (click)="selecionarTerritorio(t.id)"
-                  [ngClass]="territorioSelecionadoId === t.id
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold'
-                    : 'bg-slate-900 text-slate-200 border-slate-700 hover:border-slate-500 font-semibold'"
-                  class="text-xs sm:text-sm px-3 py-1.5 rounded-lg border transition cursor-pointer"
-                  [attr.aria-pressed]="territorioSelecionadoId === t.id"
-                >
-                  {{ obterNomeCurto(t.nome_local) }}
-                </button>
-              }
-            </div>
           </div>
+
+          <!-- BANNER ATIVO QUANDO OFFLINE OU SEM SINAL (MODO EMERGÊNCIA REAL) -->
+          @if (!conexaoAtiva) {
+            <div
+              class="mt-3 p-3 rounded-xl bg-amber-950/90 border-2 border-amber-500/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in"
+              role="alert"
+            >
+              <div class="flex items-center gap-2.5">
+                <span class="h-3 w-3 rounded-full bg-amber-400 shrink-0 animate-ping" aria-hidden="true"></span>
+                <div>
+                  <p class="text-xs sm:text-sm font-black text-amber-200 leading-tight">
+                    MODO EMERGÊNCIA SEM INTERNET ATIVO
+                  </p>
+                  <p class="text-xs text-amber-300/90 mt-0.5">
+                    Infraestrutura de rede inoperante. Abrigos e rotas de fuga salvos em cache local.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                (click)="abrirModalP2P()"
+                class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-black bg-amber-400 text-slate-950 hover:bg-amber-300 transition cursor-pointer"
+              >
+                Transmitir Alerta Offline (QR Code)
+              </button>
+            </div>
+          }
         </div>
       </header>
 
-      <!-- CONTEÚDO PRINCIPAL (SINGLE-PAGE SIMPLIFICADA) -->
-      <main class="max-w-3xl w-full mx-auto px-4 py-6 space-y-5 flex-1">
+      <!-- CONTEÚDO PRINCIPAL COM MAPA INTERATIVO NO TOPO -->
+      <main class="max-w-4xl w-full mx-auto px-4 py-5 space-y-5 flex-1">
+        <!-- 1. MAPA INTERATIVO DO RECIFE (SUBSTITUI O DROPDOWN ANTIGO) -->
+        <app-mapa-territorial
+          [territorios]="territorios"
+          [territorioSelecionadoId]="territorioSelecionadoId"
+          [alertaAtual]="alertaAtual"
+          (selecionarTerritorio)="selecionarTerritorio($event)"
+        ></app-mapa-territorial>
+
+        <!-- CARD INFORMATIVO DE TRANSIÇÃO E ATUALIZAÇÃO -->
         @if (carregando && !alertaAtual) {
           <div
             class="rounded-2xl bg-slate-900 border-2 border-slate-800 p-8 text-center animate-pulse"
@@ -127,22 +131,23 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
             aria-live="polite"
           >
             <p class="text-lg font-bold text-emerald-300">
-              Consultando sensores climáticos e traduzindo alerta territorial...
+              Consultando sensores climáticos e traçando corredor de fuga...
             </p>
           </div>
         }
 
         @if (alertaAtual) {
-          <!-- 2. CARD PRINCIPAL DE RISCO (SEMÁFORO VISUAL + VOZ) -->
+          <!-- 2. CARD PRINCIPAL DE RISCO (SEMÁFORO VISUAL + VOZ + MICROTERRITÓRIO) -->
           <app-card-risco
             [alerta]="alertaAtual"
             [lendoEmVozAlta]="lendoEmVozAlta"
             (alternarVoz)="alternarLeituraVozAlta()"
           ></app-card-risco>
 
-          <!-- 3. CARD "O QUE FAZER AGORA" & PONTO DE APOIO -->
+          <!-- 3. CARD "O QUE FAZER AGORA" & PONTO DE APOIO COM ROTA HIPERLOCAL -->
           <app-card-acao-apoio
             [alerta]="alertaAtual"
+            (abrirCompartilhamento)="abrirModalP2P()"
           ></app-card-acao-apoio>
 
           <!-- 4. CARD "CUIDANDO DO NOSSO TERRITÓRIO" (MANGUES, RIOS E ENCOSTAS) -->
@@ -152,16 +157,24 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
         }
       </main>
 
-      <!-- 5. RODAPÉ DISCRETO DE DEMONSTRAÇÃO PARA O PITCH -->
+      <!-- MODAL DE TRANSMISSÃO E RECEBIMENTO DE ALERTA SEM INTERNET (MALHA P2P) -->
+      <app-modal-compartilhar-offline
+        [aberto]="modalP2PAberto"
+        [alerta]="alertaAtual"
+        (fechar)="modalP2PAberto = false"
+        (alertaSincronizado)="aoSincronizarAlertaOffline($event)"
+      ></app-modal-compartilhar-offline>
+
+      <!-- 5. RODAPÉ DE DEMONSTRAÇÃO PARA O PITCH -->
       <footer class="border-t border-slate-800 bg-slate-900/90 mt-8">
-        <div class="max-w-3xl mx-auto px-4 py-5">
+        <div class="max-w-4xl mx-auto px-4 py-5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
-                Modo Demonstração (Pitch Hackathon APONTI • Antena na Lama)
+                Modo Demonstração (Pitch REC'n'Play • Antena na Lama)
               </p>
               <p class="text-xs text-slate-300 mt-0.5">
-                Simule eventos climáticos extremos ao vivo para validar a tradução da IA e o semáforo de crise.
+                Simule eventos climáticos extremos ao vivo para demonstrar a mudança do mapa e da IA.
               </p>
             </div>
 
@@ -181,7 +194,7 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
                 aria-label="Simular chuva moderada de 8.5 milímetros por hora"
                 class="px-3 py-2 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 transition cursor-pointer"
               >
-                Simular Atenção (8.5 mm/h)
+                Atenção (8.5 mm/h)
               </button>
 
               <button
@@ -190,7 +203,7 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
                 aria-label="Simular chuva forte de 22.5 milímetros por hora"
                 class="px-3.5 py-2 rounded-lg text-xs font-extrabold bg-red-500 text-white hover:bg-red-400 shadow-md shadow-red-950 transition cursor-pointer"
               >
-                Simular Chuva Forte (22.5 mm/h)
+                Chuva Forte (22.5 mm/h)
               </button>
 
               <button
@@ -201,12 +214,21 @@ import { CardTerritorioVivoComponent } from './components/card-territorio-vivo/c
               >
                 Crise Extrema (45 mm/h)
               </button>
+
+              <button
+                type="button"
+                (click)="abrirModalP2P()"
+                aria-label="Demonstrar malha P2P offline via QR Code"
+                class="px-3 py-2 rounded-lg text-xs font-black bg-amber-400 text-slate-950 hover:bg-amber-300 shadow transition cursor-pointer"
+              >
+                ⚡ Malha P2P
+              </button>
             </div>
           </div>
 
           <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
             <span>Inspirado no Manifesto Caranguejos com Cérebro (Manguebeat)</span>
-            <span>Dados Abertos Recife + Open-Meteo + Gemini IA</span>
+            <span>Mapa Territorial Interativo + Malha P2P Offline + Gemini IA</span>
           </div>
         </div>
       </footer>
@@ -217,20 +239,26 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly alertaService = inject(AlertaService);
 
   territorios: Territorio[] = TERRITORIOS_PADRAO;
-  territorioSelecionadoId = 1;
+  territorioSelecionadoId = 3; // Inicia no Ibura (UR-02) para forte impacto inicial
   alertaAtual: AlertaTerritorial | null = null;
   carregando = false;
-  estaOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  estaOnlineNavegador = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  modoQuedaRedeSimulado = false;
   lendoEmVozAlta = false;
   modoSimulacaoAtivo = false;
+  modalP2PAberto = false;
   private chuvaSimuladaAtual: number | null = null;
 
+  get conexaoAtiva(): boolean {
+    return this.estaOnlineNavegador && !this.modoQuedaRedeSimulado;
+  }
+
   private readonly handleOnline = () => {
-    this.estaOnline = true;
+    this.estaOnlineNavegador = true;
   };
 
   private readonly handleOffline = () => {
-    this.estaOnline = false;
+    this.estaOnlineNavegador = false;
   };
 
   ngOnInit(): void {
@@ -253,6 +281,27 @@ export class AppComponent implements OnInit, OnDestroy {
       window.removeEventListener('offline', this.handleOffline);
       this.pararLeituraVozAlta();
     }
+  }
+
+  alternarQuedaRedeSimulada(): void {
+    this.modoQuedaRedeSimulado = !this.modoQuedaRedeSimulado;
+    if (this.modoQuedaRedeSimulado) {
+      if (this.alertaAtual) {
+        this.alertaService.salvarCacheOffline(this.territorioSelecionadoId, this.alertaAtual);
+      }
+    }
+  }
+
+  abrirModalP2P(): void {
+    this.modalP2PAberto = true;
+  }
+
+  aoSincronizarAlertaOffline(alerta: AlertaTerritorial): void {
+    this.alertaAtual = alerta;
+    if (alerta.territorio_id) {
+      this.territorioSelecionadoId = alerta.territorio_id;
+    }
+    this.pararLeituraVozAlta();
   }
 
   selecionarTerritorio(id: number): void {
@@ -322,11 +371,15 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     window.speechSynthesis.cancel();
+    const local = this.alertaAtual.microterritorio || this.alertaAtual.territorio;
+    const rota = this.alertaAtual.rota_fuga_segura ? ` Rota de fuga recomendada: ${this.alertaAtual.rota_fuga_segura}.` : '';
+
     const textoParaLer = [
-      `Boletim Recife Seguro para ${this.alertaAtual.territorio}.`,
+      `Boletim hiperlocal Recife Seguro para ${local}.`,
       `Nível de risco: ${this.alertaAtual.nivel_risco}.`,
       this.alertaAtual.alerta_humanizado,
       `O que fazer agora: ${this.alertaAtual.acao_segura}`,
+      rota,
       `Cuidado com o território: ${this.alertaAtual.cuidado_ambiental}`,
     ].join(' ');
 
@@ -350,9 +403,4 @@ export class AppComponent implements OnInit, OnDestroy {
     }
     this.lendoEmVozAlta = false;
   }
-
-  obterNomeCurto(nomeCompleto: string): string {
-    return nomeCompleto.split('(')[0].trim();
-  }
 }
-

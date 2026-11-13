@@ -13,52 +13,85 @@ from .schemas import AlertaTerritorialResponse, SimularCriseRequest, TerritorioR
 from .services.ai_translator import traduzir_alerta_com_ia, traduzir_alerta_deterministico
 from .services.weather_service import buscar_clima_open_meteo
 
-# Seed oficial de territórios vulneráveis de Recife/PE (Baseado nos Dados Abertos do Recife)
+# Seed oficial de territórios e microterritórios vulneráveis de Recife/PE
 SEED_TERRITORIOS = [
     {
         "id": 1,
-        "nome_local": "Morro da Conceição (Zona Norte)",
+        "nome_local": "Morro da Conceição — Alto José do Pinho",
+        "bairro": "Morro da Conceição",
+        "microterritorio": "Alto José do Pinho / Encosta Norte",
+        "topografia_risco": "Encosta Íngreme (Barreira R4)",
         "tipo_ecossistema": "Encosta/Morro",
         "latitude": -8.0264,
         "longitude": -34.9189,
         "ponto_apoio_proximo": "Escola Municipal Prof. Solano Trindade",
-        "fator_vulnerabilidade": "Alta declividade e solo encharcado em chuvas intensas",
+        "fator_vulnerabilidade": "Alta declividade (>35°), solo argiloso e risco iminente de desmoronamento de barreira",
+        "rota_fuga_segura": "Desça pelo acesso asfaltado principal em direção à Escola Prof. Solano Trindade",
     },
     {
         "id": 2,
-        "nome_local": "Ilha Joana Bezerra / Coque (Centro)",
+        "nome_local": "Ilha Joana Bezerra — Comunidade do Coque",
+        "bairro": "Ilha Joana Bezerra",
+        "microterritorio": "Comunidade do Coque / Margem do Canal de Afogados",
+        "topografia_risco": "Manguezal Urbano / Canal Estuarino",
         "tipo_ecossistema": "Manguezal / Margem de Rio",
         "latitude": -8.0753,
         "longitude": -34.8967,
         "ponto_apoio_proximo": "Escola Municipal Karla Patrícia",
-        "fator_vulnerabilidade": "Influência da maré do Rio Capibaribe e canais de drenagem",
+        "fator_vulnerabilidade": "Influência direta de maré do Rio Capibaribe e refluxo do canal de drenagem",
+        "rota_fuga_segura": "Siga pela Rua Imperial até a Escola Karla Patrícia, evitando pontes de madeira sobre o canal",
     },
     {
         "id": 3,
-        "nome_local": "UR-02 Ibura (Zona Sul)",
+        "nome_local": "UR-02 Ibura — Alto da Sucupira",
+        "bairro": "Ibura",
+        "microterritorio": "Alto da Sucupira / Rua Rio Brígida",
+        "topografia_risco": "Encosta Íngreme (Barreira Viva)",
         "tipo_ecossistema": "Encosta/Morro",
         "latitude": -8.1256,
         "longitude": -34.9458,
         "ponto_apoio_proximo": "Escola Municipal Sociólogo Gilberto Freyre",
-        "fator_vulnerabilidade": "Barreiras sujeitas a deslizamento e acúmulo de água",
+        "fator_vulnerabilidade": "Barreiras saturadas com alto risco de escorregamento sobre residências",
+        "rota_fuga_segura": "Suba pela Rua Rio Pajeú até a Escola Sociólogo Gilberto Freyre. Afaste-se do talude",
     },
     {
         "id": 4,
-        "nome_local": "Córrego do Jenipapo (Zona Norte)",
+        "nome_local": "Córrego do Jenipapo — Calha do Rio Morno",
+        "bairro": "Córrego do Jenipapo",
+        "microterritorio": "Córrego do Jenipapo / Rua da Bica",
+        "topografia_risco": "Fundo de Córrego / Vale Estreito",
         "tipo_ecossistema": "Encosta / Margem de Córrego",
         "latitude": -8.0158,
         "longitude": -34.9364,
         "ponto_apoio_proximo": "Escola Municipal Córrego do Jenipapo",
-        "fator_vulnerabilidade": "Transbordamento rápido do córrego e encostas adjacentes",
+        "fator_vulnerabilidade": "Transbordamento violento da calha com forte correnteza e arrasto de materiais",
+        "rota_fuga_segura": "Suba imediatamente pelas escadarias laterais em direção à Escola Córrego do Jenipapo",
     },
     {
         "id": 5,
-        "nome_local": "Ilha de Deus / Imbiribeira (Zona Sul)",
+        "nome_local": "Ilha de Deus — Passarela dos Pescadores",
+        "bairro": "Pina / Imbiribeira",
+        "microterritorio": "Ilha de Deus / Passarela dos Pescadores",
+        "topografia_risco": "Estuário de Maré / Área de Palafita",
         "tipo_ecossistema": "Estuário / Manguezal",
         "latitude": -8.0975,
         "longitude": -34.9092,
         "ponto_apoio_proximo": "Escola Municipal Paulo VI",
-        "fator_vulnerabilidade": "Encontro dos rios Jordão, Tejipió e Pina com maré alta",
+        "fator_vulnerabilidade": "Encontro dos rios Jordão e Tejipió com maré alta e submersão de passarelas",
+        "rota_fuga_segura": "Evacue pelas passarelas elevadas em direção ao ponto de apoio na Escola Paulo VI",
+    },
+    {
+        "id": 6,
+        "nome_local": "Baixa do Ibura — Vila dos Milagres",
+        "bairro": "Ibura",
+        "microterritorio": "Vila dos Milagres / Calha do Canal do Jordão",
+        "topografia_risco": "Fundo de Vale / Baixada Inundável (Cota < 3m)",
+        "tipo_ecossistema": "Margem de Canal / Várzea",
+        "latitude": -8.1215,
+        "longitude": -34.9380,
+        "ponto_apoio_proximo": "Creche Municipal Casinha de Palha (Rua das Flores)",
+        "fator_vulnerabilidade": "Assoreamento da calha, transbordamento súbito do canal e choque elétrico",
+        "rota_fuga_segura": "Desligue a chave geral de luz e evacue pela Rua Nova Descoberta em direção à creche alta",
     },
 ]
 
@@ -114,11 +147,15 @@ def _obter_territorio_seguro(db: Session, territorio_id: int) -> dict:
             return {
                 "id": registro.id,
                 "nome_local": registro.nome_local,
+                "bairro": getattr(registro, "bairro", None),
+                "microterritorio": getattr(registro, "microterritorio", None),
+                "topografia_risco": getattr(registro, "topografia_risco", None),
                 "tipo_ecossistema": registro.tipo_ecossistema,
                 "latitude": registro.latitude,
                 "longitude": registro.longitude,
                 "ponto_apoio_proximo": registro.ponto_apoio_proximo,
                 "fator_vulnerabilidade": registro.fator_vulnerabilidade,
+                "rota_fuga_segura": getattr(registro, "rota_fuga_segura", None),
             }
     except Exception:
         pass
@@ -150,11 +187,11 @@ async def health_check(db: Session = Depends(get_db)):
 
 @app.get("/api/v1/territorios", response_model=List[TerritorioResponse])
 async def listar_territorios(db: Session = Depends(get_db)):
-    """Lista os territórios vulneráveis monitorados em Recife (encostas, rios e mangues)."""
+    """Lista os territórios e microterritórios vulneráveis monitorados em Recife."""
     try:
         inicializar_banco()
         registros = db.query(TerritorioRisco).order_by(TerritorioRisco.id).all()
-        if registros:
+        if registros and len(registros) >= len(SEED_TERRITORIOS):
             return registros
     except Exception:
         pass
@@ -173,9 +210,9 @@ async def obter_alerta_territorial(
     db: Session = Depends(get_db),
 ):
     """
-    Consulta a Open-Meteo em tempo real usando latitude e longitude do território,
+    Consulta a Open-Meteo em tempo real usando latitude e longitude do microterritório,
     classifica o risco de forma determinística e aciona a IA para traduzir o alerta
-    em linguagem acessível com orientação de segurança e preservação ambiental.
+    em linguagem acessível com foco hiperlocal e rota de fuga.
     """
     local = _obter_territorio_seguro(db, territorio_id)
 
@@ -189,12 +226,19 @@ async def obter_alerta_territorial(
         chuva_mm=chuva_atual,
         ponto_apoio=local["ponto_apoio_proximo"],
         fator_vulnerabilidade=local.get("fator_vulnerabilidade"),
+        bairro=local.get("bairro"),
+        microterritorio=local.get("microterritorio"),
+        topografia_risco=local.get("topografia_risco"),
+        rota_fuga_segura=local.get("rota_fuga_segura"),
     )
 
     # Registra auditoria do alerta gerado no banco de dados
     try:
         novo_alerta = AlertaGerado(
             territorio_id=local["id"],
+            bairro=local.get("bairro"),
+            microterritorio=local.get("microterritorio"),
+            rota_fuga_segura=local.get("rota_fuga_segura"),
             precipitacao_mm=chuva_atual,
             temperatura_c=temp_atual,
             nivel_risco=traducao["nivel_risco"],
@@ -211,6 +255,10 @@ async def obter_alerta_territorial(
     return AlertaTerritorialResponse(
         territorio_id=local["id"],
         territorio=local["nome_local"],
+        bairro=local.get("bairro"),
+        microterritorio=local.get("microterritorio"),
+        topografia_risco=local.get("topografia_risco"),
+        rota_fuga_segura=local.get("rota_fuga_segura"),
         ecossistema=local["tipo_ecossistema"],
         precipitacao_mm=chuva_atual,
         temperatura_c=temp_atual,
