@@ -72,9 +72,12 @@ import { AlertaTerritorial } from '../../models/alerta.model';
 
         <!-- Mensagem Traduzida pela IA (Fonte >= 18px para leitura rápida < 3s) -->
         <div class="mb-5">
-          <div class="flex items-center gap-2 mb-1.5">
+          <div class="flex flex-wrap items-center gap-2 mb-1.5">
             <span class="text-xs font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2.5 py-0.5 rounded">
               Tradução T.A.D.C. (Linguagem Acessível)
+            </span>
+            <span class="text-xs font-semibold text-white/90 bg-black/40 border border-white/20 px-2.5 py-0.5 rounded">
+              {{ alerta.fonte_ia === 'gemini_ia' ? '✨ Google Gemini IA + Trava Determinística' : '🛡️ Guardrail Determinístico Validado' }}
             </span>
           </div>
           <p class="text-lg sm:text-xl font-bold text-white leading-relaxed">
@@ -148,4 +151,3 @@ export class CardRiscoComponent {
     }
   }
 }
-

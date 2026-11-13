@@ -237,6 +237,12 @@ export class AppComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', this.handleOnline);
       window.addEventListener('offline', this.handleOffline);
+
+      const params = new URLSearchParams(window.location.search);
+      const idUrl = Number(params.get('territorio'));
+      if (idUrl >= 1 && idUrl <= 5) {
+        this.territorioSelecionadoId = idUrl;
+      }
     }
 
     this.alertaService.listarTerritorios().subscribe((lista) => {

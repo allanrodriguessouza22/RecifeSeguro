@@ -60,6 +60,16 @@ import { AlertaTerritorial } from '../../models/alerta.model';
             </a>
 
             <a
+              [href]="obterLinkWhatsApp(alerta)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm bg-emerald-400 text-slate-950 hover:bg-emerald-300 transition"
+              aria-label="Compartilhar este alerta no grupo de WhatsApp da comunidade"
+            >
+              <span>Alerta no WhatsApp</span>
+            </a>
+
+            <a
               href="tel:199"
               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm bg-amber-400 text-slate-950 hover:bg-amber-300 transition"
               aria-label="Ligar 199 para a Defesa Civil do Recife"
@@ -79,5 +89,22 @@ export class CardAcaoApoioComponent {
     const query = encodeURIComponent(`${pontoApoio}, ${territorio}, Recife - PE`);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   }
-}
 
+  obterLinkWhatsApp(alerta: AlertaTerritorial): string {
+    const origem =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://recifeseguro-five.vercel.app';
+    const texto = [
+      `🚨 *Recife Seguro (T.A.D.C.) — ${alerta.territorio}*`,
+      `Nível de Risco: *${alerta.nivel_risco}* (${alerta.precipitacao_mm.toFixed(1)} mm/h)`,
+      '',
+      alerta.alerta_humanizado,
+      '',
+      `🏫 *Ponto de Apoio:* ${alerta.ponto_apoio}`,
+      `📞 *Emergência Defesa Civil:* 199`,
+      `🔗 *Acompanhe o alerta do bairro:* ${origem}/?territorio=${alerta.territorio_id}`,
+    ].join('\n');
+    return `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  }
+}
