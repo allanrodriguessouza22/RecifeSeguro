@@ -80,6 +80,25 @@ Hackaton-Aponti-/
 
 ---
 
+## 4.1. Transparência de Dados: O que é Tempo Real vs. Curadoria Fixa (Seed) / Fallback Offline
+
+Para garantir total transparência técnica para a banca avaliadora e resiliência em situações reais de crise (quando a internet cai ou o usuário testa apenas o frontend), a aplicação opera com uma arquitetura híbrida entre **dados dinâmicos em tempo real** e **dados curados/mockados de resiliência**:
+
+1. **Clima e Tradução IA (Tempo Real em Produção):**
+   * **Meteorologia (`precipitacao_mm` e `temperatura_c`):** Consumidos em tempo real da API pública **Open-Meteo** (`https://api.open-meteo.com/v1/forecast`) usando as coordenadas exatas (`latitude`/`longitude`) de cada comunidade.
+   * **Tradução Humanizada (`alerta_humanizado`, `acao_segura`, `cuidado_ambiental`):** Gerados dinamicamente via **Google Gemini 2.5 Flash** (`fonte_ia: "gemini_ia"`) no backend, com cache em memória por `(território, ecossistema, nível de risco, faixa de chuva)` para evitar chamadas repetidas.
+
+2. **Catálogo de Territórios e Pontos de Apoio (Seed Oficial / Dados Estáticos Curados):**
+   * Os **5 territórios vulneráveis** (*Morro da Conceição*, *Ilha Joana Bezerra / Coque*, *UR-02 Ibura*, *Córrego do Jenipapo* e *Ilha de Deus*), seus tipos de ecossistema, fatores de vulnerabilidade e as **Escolas Municipais / Pontos de Apoio** correspondentes são **dados fixos pré-cadastrados (seed/mock estruturado)** inspirados nos mapeamentos abertos da Prefeitura do Recife (`dados.recife.pe.gov.br`), definidos em `SEED_TERRITORIOS` no backend (`backend/app/main.py`) e espelhados em `TERRITORIOS_PADRAO` no frontend (`frontend/src/app/services/alerta.service.ts`).
+
+3. **Simulador de Crise para Demonstração / Pitch (Injeção Controlada de Chuva):**
+   * Como o clima real do Recife no momento da apresentação pode estar sem chuva (`0.0 mm/h`), o rodapé da interface possui os botões do **Modo Demonstração (Pitch)** (`Clima Real`, `10 mm/h`, `25 mm/h` e `Tempestade 45 mm/h`). Quando acionados, eles substituem apenas o volume de chuva pelo valor simulado (`?simular_chuva=X`), permitindo demonstrar ao vivo a mudança do semáforo e a tradução da IA para cenários moderados e críticos.
+
+4. **Fallback Offline no Frontend (`TERRITORIOS_PADRAO` e `obterFallbackOffline`):**
+   * Caso o frontend Angular seja executado isoladamente sem o backend Python rodando, ou caso o morador fique sem conexão com a internet durante uma tempestade, o serviço `AlertaService` (`frontend/src/app/services/alerta.service.ts`) intercepta a falha de rede e exibe automaticamente o último alerta salvo no `localStorage` ou um **alerta determinístico local pré-configurado (mock de contingência offline, identificado pelo selo `fonte_ia: "cache_offline_seguro"`)**, garantindo que o cidadão nunca veja uma tela de erro em um momento de emergência.
+
+---
+
 ## 5. Como Rodar Localmente
 
 ### 5.1. Backend (FastAPI)
