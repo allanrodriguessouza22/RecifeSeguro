@@ -21,10 +21,10 @@ Para total transparência técnica com a banca avaliadora e resiliência em camp
 *   **Desenvolvedores:**
     *   Allan Rodrigues - [Full Stack / IA / Arquitetura & Deploy]
     *   Artur Leone - [DevOps / CI-CD / Qualidade & Back-end]
-    *   [Nome 3] - [Trilha: ex: Front-end / UX]
-    *   [Nome 4] - [Trilha: ex: Dados / Mobile / Testes]
-*   **Validador(a) (Movimento Pró-Criança):**
-    *   [Nome do Validador(a)]
+    *   Helmer Barcelos - [Full Stack / IA / Arquitetura & Deploy]
+    *   Mateus Washington - [DevOps / CI-CD / Qualidade & Back-end]
+*   **Validadora:**
+    *   Gabrielly Oliveira
 
 ## 🚀 Tecnologias Utilizadas
 *   **Front-end:** Angular 18+ (Standalone Components), TypeScript, Tailwind CSS, Leaflet (Mapa Interativo CARTO/OSM), QRCode (Malha P2P Offline), Angular Service Worker (`@angular/pwa`) e Web Speech API (`speechSynthesis` nativo `pt-BR`)
