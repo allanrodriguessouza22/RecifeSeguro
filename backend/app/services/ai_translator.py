@@ -25,137 +25,141 @@ def traduzir_alerta_deterministico(
     chuva_mm: float,
     ponto_apoio: str,
     fator_vulnerabilidade: Optional[str] = None,
+    bairro: Optional[str] = None,
+    microterritorio: Optional[str] = None,
+    topografia_risco: Optional[str] = None,
+    rota_fuga_segura: Optional[str] = None,
 ) -> Dict[str, str]:
     """
-    Camada determinística validada com linguagem acessível e hiperlocalizada por ecossistema
-    inspirada no Manifesto Caranguejos com Cérebro (proteção de encostas, córregos, rios e mangues).
+    Camada determinística validada com linguagem acessível e foco hiperlocal
+    inspirada no Manifesto Caranguejos com Cérebro (proteção de encostas, rios e mangues).
+    Diferencia microterritórios do mesmo bairro conforme topografia (encosta vs canal/várzea).
     """
     nivel_risco = classificar_nivel_risco(chuva_mm)
-    eco_lower = (ecossistema or "").lower()
-    eh_mangue_ou_rio = any(p in eco_lower for p in ("mangue", "estuário", "estuario", "rio"))
-    eh_corrego = "córrego" in eco_lower or "corrego" in eco_lower
+    nome_exibicao = microterritorio or territorio
+    rotulo_topografia = topografia_risco or ecossistema
+    rota_sugerida = f" Rota de fuga segura: {rota_fuga_segura}." if rota_fuga_segura else ""
+
+    texto_base = f"{rotulo_topografia} {ecossistema}".lower()
+    eh_encosta = any(k in texto_base for k in ("encosta", "morro", "barreira", "talude"))
+    eh_canal = any(k in texto_base for k in ("canal", "rio", "córrego", "corrego", "fundo de vale", "várzea", "varzea"))
+    eh_mangue = any(k in texto_base for k in ("mangue", "estuário", "estuario", "palafita", "maré", "mare"))
 
     if nivel_risco == "CRÍTICO":
-        if eh_mangue_ou_rio:
-            return {
-                "nivel_risco": "CRÍTICO",
-                "alerta_humanizado": (
-                    f"Atenção urgente em {territorio}! Está chovendo muito forte agora "
-                    f"({chuva_mm:.1f} mm/h). Há risco imediato de alagamento rápido e "
-                    f"transbordamento de canais e margens de rio com a maré na área de {ecossistema}."
-                ),
-                "acao_segura": (
-                    f"Saia de áreas baixas e beira de rio ou canal imediatamente, desligue a energia "
-                    f"elétrica, avise seus vizinhos e procure abrigo seguro em: {ponto_apoio}. "
-                    f"Em emergência, ligue 199 (Defesa Civil)."
-                ),
-                "cuidado_ambiental": (
-                    "Evite contato com a água de alagamento dos canais e mantenha distância das "
-                    "margens dos rios e mangues durante a cheia."
-                ),
-                "fonte_ia": "deterministico_validado",
-            }
-        if eh_corrego:
-            return {
-                "nivel_risco": "CRÍTICO",
-                "alerta_humanizado": (
-                    f"Atenção urgente em {territorio}! Está chovendo muito forte agora "
-                    f"({chuva_mm:.1f} mm/h). Há risco imediato de transbordamento súbito do córrego "
-                    f"e deslizamento nas encostas próximas ({ecossistema})."
-                ),
-                "acao_segura": (
-                    f"Afaste-se imediatamente da beira do córrego e das barreiras, avise seus "
-                    f"vizinhos e procure abrigo seguro em: {ponto_apoio}. Em emergência, ligue 199 (Defesa Civil)."
-                ),
-                "cuidado_ambiental": (
-                    "Não tente atravessar enxurradas nem desentupir galerias do córrego durante a tempestade."
-                ),
-                "fonte_ia": "deterministico_validado",
-            }
-        return {
-            "nivel_risco": "CRÍTICO",
-            "alerta_humanizado": (
-                f"Atenção urgente em {territorio}! Está chovendo muito forte agora "
-                f"({chuva_mm:.1f} mm/h). Há risco imediato de deslizamento de barreira "
-                f"e enxurrada forte na área de {ecossistema}."
-            ),
-            "acao_segura": (
-                f"Saia de áreas de encosta, pé de barreira ou muros inclinados imediatamente, avise seus "
-                f"vizinhos e procure abrigo seguro em: {ponto_apoio}. Em emergência, ligue 199 (Defesa Civil)."
-            ),
-            "cuidado_ambiental": (
+        if eh_encosta and not eh_canal:
+            alerta_texto = (
+                f"Atenção urgente em {nome_exibicao}! Chuva muito forte ({chuva_mm:.1f} mm/h). "
+                f"Solo saturado e risco extremo de deslizamento de barreira na área de {rotulo_topografia}. "
+                f"Desocupe cômodos próximos ao morro!"
+            )
+            acao_texto = (
+                f"Saia da encosta imediatamente, avise seus vizinhos e procure o ponto de apoio: {ponto_apoio}.{rota_sugerida} "
+                f"Em emergência, ligue 199 (Defesa Civil)."
+            )
+            cuidado_texto = (
                 "Não suba em barreiras durante a enxurrada, mantenha as lonas de proteção "
                 "e nunca jogue lixo ou escave o talude do morro."
-            ),
+            )
+        elif eh_canal:
+            alerta_texto = (
+                f"Atenção urgente em {nome_exibicao}! Chuva intensa ({chuva_mm:.1f} mm/h). "
+                f"Risco imediato de transbordamento do canal e alagamento rápido de vias ({rotulo_topografia})."
+            )
+            acao_texto = (
+                f"Desligue o disjuntor geral de energia, não enfrente correntezas e siga para terreno alto em: {ponto_apoio}.{rota_sugerida} "
+                f"Em emergência, ligue 199 (Defesa Civil)."
+            )
+            cuidado_texto = (
+                "Evite contato com a água de alagamento dos canais e mantenha distância das "
+                "margens dos rios, córregos e mangues durante a cheia."
+            )
+        elif eh_mangue:
+            alerta_texto = (
+                f"Atenção urgente na comunidade de {nome_exibicao}! Chuva forte ({chuva_mm:.1f} mm/h) conjugada com maré. "
+                f"Risco imediato de alagamento e invasão das águas sobre passarelas e pontes."
+            )
+            acao_texto = (
+                f"Evacue as palafitas e áreas baixas imediatamente e abrigue-se em: {ponto_apoio}.{rota_sugerida} "
+                f"Em emergência, ligue 199 (Defesa Civil)."
+            )
+            cuidado_texto = (
+                "Evite contato com a água de alagamento e mantenha distância das "
+                "margens do estuário e manguezais durante a maré alta."
+            )
+        else:
+            alerta_texto = (
+                f"Atenção urgente em {nome_exibicao}! Está chovendo muito forte agora ({chuva_mm:.1f} mm/h). "
+                f"Há risco imediato de deslizamento ou alagamento rápido na área de {rotulo_topografia}."
+            )
+            acao_texto = (
+                f"Saia de áreas vulneráveis imediatamente, avise seus vizinhos e procure abrigo seguro em: {ponto_apoio}.{rota_sugerida} "
+                f"Em emergência, ligue 199 (Defesa Civil)."
+            )
+            cuidado_texto = (
+                "Não tente desentupir bueiros ou barreiras durante a enxurrada e mantenha "
+                "distância das margens dos rios e canais."
+            )
+
+        return {
+            "nivel_risco": "CRÍTICO",
+            "alerta_humanizado": alerta_texto,
+            "acao_segura": acao_texto,
+            "cuidado_ambiental": cuidado_texto,
             "fonte_ia": "deterministico_validado",
         }
 
     elif nivel_risco == "MODERADO":
-        if eh_mangue_ou_rio:
-            return {
-                "nivel_risco": "MODERADO",
-                "alerta_humanizado": (
-                    f"Fique ligado, morador de {territorio}: chuva moderada ({chuva_mm:.1f} mm/h) "
-                    f"atingindo a região de {ecossistema}. Os canais e margens do rio já começam a subir."
-                ),
-                "acao_segura": (
-                    f"Eleve móveis e documentos em saco plástico, carregue o celular e deixe a "
-                    f"rota pronta até: {ponto_apoio}. Acompanhe o nível do canal e da maré."
-                ),
-                "cuidado_ambiental": (
-                    "Nunca descarte lixo ou plástico nos canais; o lixo bloqueia o "
-                    "escoamento natural para o mangue e agrava os alagamentos na comunidade."
-                ),
-                "fonte_ia": "deterministico_validado",
-            }
+        if eh_encosta and not eh_canal:
+            alerta_texto = (
+                f"Fique ligado em {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) infiltrando no morro. "
+                f"O solo da encosta começa a pesar e encharcar."
+            )
+            acao_texto = (
+                f"Observe rachaduras no chão ou muros e árvores inclinadas. Tenha rota pronta para: {ponto_apoio}.{rota_sugerida}"
+            )
+        elif eh_canal or eh_mangue:
+            alerta_texto = (
+                f"Atenção em {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) com canais e margens de rio subindo rapidamente. "
+                f"Risco de poças profundas e refluxo de drenagem."
+            )
+            acao_texto = (
+                f"Eleve móveis e eletrodomésticos, guarde documentos em sacos plásticos e acompanhe o nível da água. "
+                f"Abrigo: {ponto_apoio}.{rota_sugerida}"
+            )
+        else:
+            alerta_texto = (
+                f"Fique ligado, morador de {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) "
+                f"atingindo a região de {rotulo_topografia}. O solo e canais começam a acumular água."
+            )
+            acao_texto = (
+                f"Separe documentos e remédios em saco plástico, carregue o celular e deixe a "
+                f"rota pronta até: {ponto_apoio}.{rota_sugerida}"
+            )
+
         return {
             "nivel_risco": "MODERADO",
-            "alerta_humanizado": (
-                f"Fique ligado, morador de {territorio}: chuva moderada ({chuva_mm:.1f} mm/h) "
-                f"atingindo a região de {ecossistema}. O solo da encosta já começa a encharcar."
-            ),
-            "acao_segura": (
-                f"Separe documentos e remédios em saco plástico, carregue o celular e deixe a "
-                f"rota pronta até: {ponto_apoio}. Observe rachaduras em muros, postes ou árvores inclinadas."
-            ),
+            "alerta_humanizado": alerta_texto,
+            "acao_segura": acao_texto,
             "cuidado_ambiental": (
-                "Nunca descarte lixo ou entulho nas encostas e canaletas; o lixo bloqueia a "
-                "drenagem da ladeira, encharca a barreira e agrava o risco para o mangue e os canais."
+                "Nunca descarte lixo ou entulho nas encostas e canais; o lixo bloqueia o "
+                "escoamento natural para o mangue e agrava os alagamentos na comunidade."
             ),
             "fonte_ia": "deterministico_validado",
         }
 
     else:
-        if eh_mangue_ou_rio:
-            return {
-                "nivel_risco": "BAIXO",
-                "alerta_humanizado": (
-                    f"Tudo tranquilo em {territorio} no momento ({chuva_mm:.1f} mm/h). "
-                    f"Sem risco imediato de alagamento ou cheia na região de {ecossistema}."
-                ),
-                "acao_segura": (
-                    f"Acompanhe as atualizações pelo aplicativo e conheça o ponto de apoio oficial da "
-                    f"sua comunidade: {ponto_apoio}."
-                ),
-                "cuidado_ambiental": (
-                    f"Proteger a área de {ecossistema} hoje evita enchentes amanhã: o manguezal "
-                    f"funciona como esponja natural para amortecer as chuvas e a maré alta no Recife."
-                ),
-                "fonte_ia": "deterministico_validado",
-            }
         return {
             "nivel_risco": "BAIXO",
             "alerta_humanizado": (
-                f"Tudo tranquilo em {territorio} no momento ({chuva_mm:.1f} mm/h). "
-                f"Sem risco imediato de chuva forte na região de {ecossistema}."
+                f"Tudo tranquilo em {nome_exibicao} no momento ({chuva_mm:.1f} mm/h). "
+                f"Sem risco imediato de chuva forte no setor de {rotulo_topografia}."
             ),
             "acao_segura": (
-                f"Acompanhe as atualizações pelo aplicativo e conheça o ponto de apoio oficial da "
-                f"sua comunidade: {ponto_apoio}."
+                f"Acompanhe as atualizações pelo aplicativo e conheça a rota até seu ponto de apoio: {ponto_apoio}.{rota_sugerida}"
             ),
             "cuidado_ambiental": (
-                f"Proteger a área de {ecossistema} hoje evita tragédias amanhã: mantenha canaletas "
-                f"limpas, preserve a vegetação nas encostas e descarte resíduos apenas na coleta."
+                f"Proteger a área de {rotulo_topografia} hoje evita tragédias amanhã: descarte resíduos "
+                f"apenas nos pontos de coleta e ajude a preservar os morros, rios e manguezais do Recife."
             ),
             "fonte_ia": "deterministico_validado",
         }
@@ -167,12 +171,16 @@ async def traduzir_alerta_com_ia(
     chuva_mm: float,
     ponto_apoio: str,
     fator_vulnerabilidade: Optional[str] = None,
+    bairro: Optional[str] = None,
+    microterritorio: Optional[str] = None,
+    topografia_risco: Optional[str] = None,
+    rota_fuga_segura: Optional[str] = None,
 ) -> Dict[str, str]:
     """
     Converte dados meteorológicos técnicos em linguagem simples, acolhedora e
-    contextualizada para o território de Recife.
-    Se GEMINI_API_KEY estiver configurada, utiliza o Gemini 2.5 Flash com baixa latência
-    (thinkingBudget=0) e guardrail determinístico de nível de risco e ponto de apoio.
+    hiperlocalizada para a microárea de Recife.
+    Se GEMINI_API_KEY estiver configurada, utiliza o Gemini 2.5 Flash com cache em memória
+    e guardrail determinístico de nível de risco e ponto de apoio.
     Caso contrário, retorna imediatamente o fallback determinístico validado.
     """
     base_fallback = traduzir_alerta_deterministico(
@@ -181,13 +189,18 @@ async def traduzir_alerta_com_ia(
         chuva_mm=chuva_mm,
         ponto_apoio=ponto_apoio,
         fator_vulnerabilidade=fator_vulnerabilidade,
+        bairro=bairro,
+        microterritorio=microterritorio,
+        topografia_risco=topografia_risco,
+        rota_fuga_segura=rota_fuga_segura,
     )
 
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         return base_fallback
 
-    chave_cache = (territorio, round(chuva_mm, 1))
+    chave_local = microterritorio or territorio
+    chave_cache = (chave_local, round(chuva_mm, 1))
     if chave_cache in _CACHE_TRADUCOES_IA:
         return _CACHE_TRADUCOES_IA[chave_cache]
 
@@ -195,20 +208,22 @@ async def traduzir_alerta_com_ia(
     prompt = (
         "Você é o T.A.D.C. (Tradutor de Alertas da Defesa Civil do Recife), inspirado no "
         "movimento Manguebeat (Caranguejos com Cérebro). Traduza os dados técnicos abaixo "
-        "para um morador de comunidade vulnerável do Recife em linguagem direta, empática, "
-        "sem jargões meteorológicos difíceis e compreensível em menos de 3 segundos.\n\n"
-        f"- Comunidade/Bairro: {territorio}\n"
-        f"- Ecossistema local: {ecossistema}\n"
-        f"- Vulnerabilidade específica do local: {fator_vulnerabilidade or 'Área vulnerável a chuvas'}\n"
+        "para um morador desta microárea do Recife em linguagem direta, acolhedora, "
+        "sem jargões técnicos e que possa ser lida em menos de 3 segundos.\n\n"
+        f"- Bairro: {bairro or territorio}\n"
+        f"- Microterritório/Rua: {microterritorio or territorio}\n"
+        f"- Topografia de Risco: {topografia_risco or ecossistema}\n"
+        f"- Vulnerabilidade local: {fator_vulnerabilidade or 'Área vulnerável a eventos climáticos'}\n"
+        f"- Rota de fuga: {rota_fuga_segura or 'Ponto de apoio municipal'}\n"
         f"- Precipitação atual: {chuva_mm:.1f} mm/h\n"
         f"- Nível de risco (FIXO E OBRIGATÓRIO): {nivel_risco}\n"
         f"- Ponto de apoio oficial (OBRIGATÓRIO citar em acao_segura): {ponto_apoio}\n\n"
         "Regras obrigatórias de segurança (Guardrails):\n"
-        f"1. Em alerta_humanizado, cite '{territorio}', o volume '{chuva_mm:.1f} mm/h' e diferencie claramente "
+        f"1. Em alerta_humanizado, cite '{chave_local}', o volume '{chuva_mm:.1f} mm/h' e diferencie claramente "
         "se o perigo local é deslizamento de barreira/encosta ou cheia de rio/canal/maré no manguezal. "
         "Se o risco for CRÍTICO, inclua a palavra 'urgente'.\n"
-        f"2. Em acao_segura, dê uma instrução prática imediata adequada ao ecossistema ({ecossistema}) "
-        f"e cite explicitamente o abrigo '{ponto_apoio}' e o telefone 199 da Defesa Civil.\n"
+        f"2. Em acao_segura, dê uma instrução prática imediata adequada à topografia ({topografia_risco or ecossistema}) "
+        f"e cite explicitamente o abrigo '{ponto_apoio}', a rota de fuga '{rota_fuga_segura or ''}' e o telefone 199 da Defesa Civil.\n"
         f"3. Em cuidado_ambiental, dê uma dica curta conectando a proteção de {ecossistema} (encostas, córregos ou mangues) "
         "à prevenção de desastres na comunidade.\n\n"
         "Responda APENAS com um JSON válido contendo exatamente as chaves:\n"

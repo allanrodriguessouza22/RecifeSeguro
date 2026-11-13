@@ -123,3 +123,33 @@ def test_regra_deterministica_tradutor_ia():
     assert res_mod["nivel_risco"] == "MODERADO"
     assert res_crit["nivel_risco"] == "CRÍTICO"
 
+
+@patch(
+    "backend.app.main.buscar_clima_open_meteo",
+    new_callable=AsyncMock,
+    return_value=MOCK_WEATHER_RESPONSE,
+)
+def test_diferenciacao_hiperlocal_mesmo_bairro_ibura(mock_weather):
+    """Teste 8 (Diferencial Pitch): Duas comunidades do mesmo bairro (Ibura) recebem orientações distintas sob a mesma chuva."""
+    # Microterritório 1: UR-02 Ibura (Alto da Sucupira - Encosta)
+    resp_encosta = client.get("/api/v1/alerta/3?simular_chuva=20.0")
+    assert resp_encosta.status_code == 200
+    dados_encosta = resp_encosta.json()
+    assert dados_encosta["bairro"] == "Ibura"
+    assert "Alto da Sucupira" in dados_encosta["microterritorio"]
+    assert "deslizamento" in dados_encosta["alerta_humanizado"].lower() or "barreira" in dados_encosta["alerta_humanizado"].lower()
+    assert "Escola Municipal Sociólogo Gilberto Freyre" in dados_encosta["ponto_apoio"]
+
+    # Microterritório 2: Vila dos Milagres (Baixa do Ibura - Canal)
+    resp_canal = client.get("/api/v1/alerta/6?simular_chuva=20.0")
+    assert resp_canal.status_code == 200
+    dados_canal = resp_canal.json()
+    assert dados_canal["bairro"] == "Ibura"
+    assert "Vila dos Milagres" in dados_canal["microterritorio"]
+    assert "canal" in dados_canal["alerta_humanizado"].lower() or "alagamento" in dados_canal["alerta_humanizado"].lower()
+    assert "Creche Municipal Casinha de Palha" in dados_canal["ponto_apoio"]
+
+    # Valida que as orientações de segurança são topograficamente divergentes
+    assert dados_encosta["acao_segura"] != dados_canal["acao_segura"]
+    assert dados_encosta["ponto_apoio"] != dados_canal["ponto_apoio"]
+

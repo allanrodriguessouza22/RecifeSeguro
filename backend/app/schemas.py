@@ -8,11 +8,15 @@ class TerritorioResponse(BaseModel):
 
     id: int
     nome_local: str
+    bairro: Optional[str] = None
+    microterritorio: Optional[str] = None
+    topografia_risco: Optional[str] = None
     tipo_ecossistema: str
     latitude: float
     longitude: float
     ponto_apoio_proximo: str
     fator_vulnerabilidade: Optional[str] = None
+    rota_fuga_segura: Optional[str] = None
 
 
 class AlertaTerritorialResponse(BaseModel):
@@ -20,6 +24,10 @@ class AlertaTerritorialResponse(BaseModel):
 
     territorio_id: int = Field(default=1, description="ID do território monitorado")
     territorio: str = Field(..., description="Nome do bairro ou comunidade")
+    bairro: Optional[str] = Field(default=None, description="Bairro ou macrorregião administrativa")
+    microterritorio: Optional[str] = Field(default=None, description="Microterritório/rua/córrego específico")
+    topografia_risco: Optional[str] = Field(default=None, description="Classificação topográfica de risco")
+    rota_fuga_segura: Optional[str] = Field(default=None, description="Instrução da rota de fuga hiperlocal")
     ecossistema: str = Field(..., description="Tipo de ecossistema local (Encosta, Manguezal, Rio)")
     precipitacao_mm: float = Field(..., description="Volume de chuva atual em mm/h")
     temperatura_c: float = Field(..., description="Temperatura atual em °C")

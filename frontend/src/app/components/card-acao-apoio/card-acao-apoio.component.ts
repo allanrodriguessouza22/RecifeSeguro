@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertaTerritorial } from '../../models/alerta.model';
 
@@ -38,11 +38,28 @@ import { AlertaTerritorial } from '../../models/alerta.model';
         </div>
 
         <!-- Orientação de Ação Segura -->
-        <div class="mb-6 bg-slate-950/90 p-5 rounded-2xl border border-slate-800">
+        <div class="mb-5 bg-slate-950/90 p-5 rounded-2xl border border-slate-800">
           <p class="text-base sm:text-lg font-semibold text-slate-100 leading-relaxed">
             {{ alerta.acao_segura }}
           </p>
         </div>
+
+        <!-- Rota de Fuga Hiperlocal Específica do Microterritório -->
+        @if (alerta.rota_fuga_segura) {
+          <div class="mb-5 p-4 rounded-2xl bg-amber-950/40 border-2 border-amber-400/50 flex items-start gap-3.5">
+            <div class="px-2.5 py-1.5 rounded-xl bg-amber-400 text-slate-950 shrink-0 font-black text-xs tracking-wider">
+              ROTA
+            </div>
+            <div class="min-w-0">
+              <span class="block text-xs font-black uppercase text-amber-300 tracking-wider">
+                Rota de Fuga Segura (Hiperlocal)
+              </span>
+              <p class="text-sm sm:text-base font-bold text-white mt-0.5 leading-snug">
+                {{ alerta.rota_fuga_segura }}
+              </p>
+            </div>
+          </div>
+        }
 
         <!-- Ponto de Apoio Oficial da Prefeitura do Recife + Botões de Ação em Grid sem Quebra -->
         <div class="rounded-2xl bg-sky-950/50 border border-sky-500/40 p-5 sm:p-6">
@@ -54,7 +71,7 @@ import { AlertaTerritorial } from '../../models/alerta.model';
               </span>
             </div>
 
-            <p class="text-lg sm:text-xl font-black text-white leading-snug mt-0.5">
+            <p class="text-lg sm:text-xl font-black text-white leading-snug mt-0.5 break-words">
               {{ alerta.ponto_apoio }}
             </p>
 
@@ -65,8 +82,17 @@ import { AlertaTerritorial } from '../../models/alerta.model';
             }
           </div>
 
-          <!-- Grid Responsivo de 3 Botões (Mapa, WhatsApp, 199) -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-sky-400/20">
+          <!-- Grid Responsivo de 4 Botões (Malha P2P Offline, Mapa, WhatsApp, 199) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5 pt-5 border-t border-sky-400/20">
+            <button
+              type="button"
+              (click)="abrirCompartilhamento.emit()"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-extrabold text-sm bg-amber-400 text-slate-950 hover:bg-amber-300 transition shadow-sm text-center cursor-pointer"
+              aria-label="Compartilhar este alerta sem internet via QR Code ou SMS"
+            >
+              <span>⚡ Malha Offline</span>
+            </button>
+
             <a
               [href]="obterLinkMapa(alerta.ponto_apoio, alerta.territorio)"
               target="_blank"
@@ -91,18 +117,18 @@ import { AlertaTerritorial } from '../../models/alerta.model';
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
               </svg>
-              <span>Alerta no WhatsApp</span>
+              <span>WhatsApp</span>
             </a>
 
             <a
               href="tel:199"
-              class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-extrabold text-sm bg-amber-400 text-slate-950 hover:bg-amber-300 transition shadow-sm text-center"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-extrabold text-sm bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-600 transition shadow-sm text-center"
               aria-label="Ligar 199 para a Defesa Civil do Recife"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
               </svg>
-              <span>Ligar 199 (Defesa Civil)</span>
+              <span>Ligar 199</span>
             </a>
           </div>
         </div>
@@ -112,6 +138,7 @@ import { AlertaTerritorial } from '../../models/alerta.model';
 })
 export class CardAcaoApoioComponent {
   @Input({ required: true }) alerta!: AlertaTerritorial;
+  @Output() abrirCompartilhamento = new EventEmitter<void>();
 
   obterLinkMapa(pontoApoio: string, territorio: string): string {
     const query = encodeURIComponent(`${pontoApoio}, ${territorio}, Recife - PE`);
@@ -123,8 +150,9 @@ export class CardAcaoApoioComponent {
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : 'https://recifeseguro-five.vercel.app';
+    const local = alerta.microterritorio || alerta.territorio;
     const texto = [
-      `🚨 *Recife Seguro (T.A.D.C.) — ${alerta.territorio}*`,
+      `🚨 *Recife Seguro (T.A.D.C.) — ${local}*`,
       `Nível de Risco: *${alerta.nivel_risco}* (${alerta.precipitacao_mm.toFixed(1)} mm/h)`,
       '',
       alerta.alerta_humanizado,

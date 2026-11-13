@@ -23,9 +23,9 @@ import { AlertaTerritorial } from '../../models/alerta.model';
         aria-live="polite"
         aria-label="Semáforo de risco climático atual"
       >
-        <!-- 1. Topo do Semáforo: Selo de Nível de Risco + Ecossistema -->
+        <!-- 1. Topo do Semáforo: Selo de Nível de Risco + Microterritório + Ecossistema -->
         <div class="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b border-white/15">
-          <div class="inline-flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
             <span
               [ngClass]="obterClassesPontoSemaforo(alerta.nivel_risco)"
               class="inline-block h-4 w-4 rounded-full ring-4 shrink-0"
@@ -37,26 +37,44 @@ import { AlertaTerritorial } from '../../models/alerta.model';
             >
               RISCO {{ alerta.nivel_risco }}
             </span>
+
+            @if (alerta.recebido_via_p2p) {
+              <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-400 text-slate-950 shadow">
+                ⚡ Malha P2P Offline
+              </span>
+            }
           </div>
 
-          <span class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-xl bg-black/35 text-white border border-white/20">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-            </svg>
-            <span>{{ alerta.ecossistema }}</span>
-          </span>
+          <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+            @if (alerta.bairro) {
+              <span class="font-bold px-3 py-1.5 rounded-xl bg-black/40 text-amber-300 border border-amber-400/30">
+                Bairro: {{ alerta.bairro }}
+              </span>
+            }
+            <span class="inline-flex items-center gap-1.5 font-bold px-3.5 py-1.5 rounded-xl bg-black/35 text-white border border-white/20">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+              <span>{{ alerta.topografia_risco || alerta.ecossistema }}</span>
+            </span>
+          </div>
         </div>
 
         <!-- 2. Localidade e Indicadores Climáticos sem quebra de texto -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center mb-6">
           <div class="md:col-span-7 min-w-0">
             <p class="text-xs uppercase tracking-widest text-white/80 font-bold mb-1">
-              Território Monitorado em Tempo Real
+              Microterritório Monitorado em Tempo Real
             </p>
             <h2 class="text-2xl sm:text-3xl font-black text-white leading-snug break-words">
-              {{ alerta.territorio }}
+              {{ alerta.microterritorio || alerta.territorio }}
             </h2>
+            @if (alerta.microterritorio && alerta.territorio && alerta.microterritorio !== alerta.territorio) {
+              <p class="text-xs sm:text-sm text-white/80 font-medium mt-1">
+                Região de referência: {{ alerta.territorio }}
+              </p>
+            }
           </div>
 
           <div class="md:col-span-5 grid grid-cols-2 gap-3">
@@ -94,7 +112,7 @@ import { AlertaTerritorial } from '../../models/alerta.model';
               Tradução T.A.D.C. • Linguagem Cidadã
             </span>
             <span class="text-xs font-bold text-white/95 bg-black/45 border border-white/20 px-3 py-1 rounded-lg">
-              {{ alerta.fonte_ia === 'gemini_ia' ? '✨ Google Gemini IA + Trava Determinística' : '🛡️ Guardrail Determinístico Validado' }}
+              {{ alerta.fonte_ia === 'gemini_ia' ? '✨ Google Gemini IA + Trava Determinística' : (alerta.fonte_ia === 'malha_p2p_offline' ? '⚡ Recebido via Malha P2P Offline' : '🛡️ Guardrail Determinístico Validado') }}
             </span>
           </div>
 
