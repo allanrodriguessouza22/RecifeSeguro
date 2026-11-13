@@ -172,16 +172,18 @@ export class AlertaService {
     const chuva = simularChuva ?? 0.0;
     const microNome = local.microterritorio || local.nome_local;
     const rotaTexto = local.rota_fuga_segura ? ` Rota recomendada: ${local.rota_fuga_segura}.` : '';
+    const ecoLower = `${local.topografia_risco || ''} ${local.tipo_ecossistema}`.toLowerCase();
+    const ehEncosta = ecoLower.includes('encosta') || ecoLower.includes('morro') || ecoLower.includes('barreira');
+    const ehMangueOuRio = ecoLower.includes('mangue') || ecoLower.includes('estuário') || ecoLower.includes('rio') || ecoLower.includes('canal');
 
     if (chuva >= 15.0) {
-      const ehEncosta = local.topografia_risco?.toLowerCase().includes('encosta') || local.tipo_ecossistema.toLowerCase().includes('encosta');
       const mensagem = ehEncosta
         ? `Atenção urgente em ${microNome}! Está chovendo muito forte agora (${chuva.toFixed(1)} mm/h). Solo saturado com alto risco de deslizamento de barreira. Desocupe quartos colados ao morro!`
         : `Alerta máximo em ${microNome}! Chuva intensa (${chuva.toFixed(1)} mm/h). Risco de inundação rápida do canal e vias submersas.`;
 
       const acao = ehEncosta
         ? `Saia da encosta imediatamente, avise seus vizinhos e procure abrigo seguro em: ${local.ponto_apoio_proximo}.${rotaTexto} Em emergência, ligue 199 (Defesa Civil).`
-        : `Desligue a chave geral de luz, evite correntezas e vá para área alta em: ${local.ponto_apoio_proximo}.${rotaTexto} Em emergência, ligue 199.`;
+        : `Desligue a chave geral de luz, evite correntezas e vá para área alta em: ${local.ponto_apoio_proximo}.${rotaTexto} Em emergência, ligue 199 (Defesa Civil).`;
 
       return {
         territorio_id: local.id,
@@ -196,8 +198,9 @@ export class AlertaService {
         nivel_risco: 'CRÍTICO',
         alerta_humanizado: mensagem,
         acao_segura: acao,
-        cuidado_ambiental:
-          'Não tente desentupir bueiros ou barreiras durante a enxurrada e mantenha distância das margens dos rios e canais.',
+        cuidado_ambiental: ehMangueOuRio
+          ? 'Evite contato com a água de alagamento dos canais e mantenha distância das margens dos rios e mangues durante a cheia.'
+          : 'Não suba em barreiras durante a enxurrada, mantenha as lonas de proteção e nunca jogue lixo ou escave o talude do morro.',
         ponto_apoio: local.ponto_apoio_proximo,
         fator_vulnerabilidade: local.fator_vulnerabilidade,
         fonte_ia: 'cache_offline_seguro',
@@ -217,10 +220,10 @@ export class AlertaService {
         precipitacao_mm: chuva,
         temperatura_c: 27.0,
         nivel_risco: 'MODERADO',
-        alerta_humanizado: `Fique ligado, morador de ${microNome}: chuva moderada (${chuva.toFixed(1)} mm/h) atingindo o setor de ${local.topografia_risco || local.tipo_ecossistema}. O solo já começa a acumular água.`,
+        alerta_humanizado: `Fique ligado, morador de ${microNome}: chuva moderada (${chuva.toFixed(1)} mm/h) atingindo o setor de ${local.topografia_risco || local.tipo_ecossistema}. O solo e os canais já começam a acumular água.`,
         acao_segura: `Separe documentos em saco plástico, carregue o celular e deixe a rota pronta até: ${local.ponto_apoio_proximo}.${rotaTexto}`,
         cuidado_ambiental:
-          'Nunca descarte lixo nas encostas ou canais; o lixo bloqueia o escoamento natural para o mangue e causa alagamentos.',
+          'Nunca descarte lixo nas encostas ou canais; o lixo bloqueia o escoamento natural para o mangue e agrava os alagamentos.',
         ponto_apoio: local.ponto_apoio_proximo,
         fator_vulnerabilidade: local.fator_vulnerabilidade,
         fonte_ia: 'cache_offline_seguro',
@@ -240,8 +243,10 @@ export class AlertaService {
       temperatura_c: 28.5,
       nivel_risco: 'BAIXO',
       alerta_humanizado: `Tudo tranquilo em ${microNome} no momento (${chuva.toFixed(1)} mm/h). Sem risco imediato de chuva forte no setor de ${local.topografia_risco || local.tipo_ecossistema}.`,
-      acao_segura: `Acompanhe as atualizações pelo aplicativo e conheça o ponto de apoio da sua comunidade: ${local.ponto_apoio_proximo}.${rotaTexto}`,
-      cuidado_ambiental: `Proteger a área de ${local.tipo_ecossistema} hoje evita tragédias amanhã: descarte resíduos apenas nos pontos de coleta.`,
+      acao_segura: `Acompanhe as atualizações pelo aplicativo e conheça o ponto de apoio oficial da sua comunidade: ${local.ponto_apoio_proximo}.${rotaTexto}`,
+      cuidado_ambiental: ehMangueOuRio
+        ? `Proteger a área de ${local.tipo_ecossistema} hoje evita enchentes amanhã: o manguezal funciona como esponja natural para amortecer as chuvas e a maré alta no Recife.`
+        : `Proteger a área de ${local.tipo_ecossistema} hoje evita tragédias amanhã: mantenha canaletas limpas e descarte resíduos apenas nos pontos de coleta.`,
       ponto_apoio: local.ponto_apoio_proximo,
       fator_vulnerabilidade: local.fator_vulnerabilidade,
       fonte_ia: 'cache_offline_seguro',
@@ -304,4 +309,3 @@ export class AlertaService {
     }
   }
 }
-

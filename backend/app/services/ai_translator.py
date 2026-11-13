@@ -1,7 +1,9 @@
 import json
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 import httpx
+
+_CACHE_TRADUCOES_IA: Dict[Tuple[str, float], Dict[str, str]] = {}
 
 
 def classificar_nivel_risco(chuva_mm: float) -> str:
@@ -38,37 +40,51 @@ def traduzir_alerta_deterministico(
     rotulo_topografia = topografia_risco or ecossistema
     rota_sugerida = f" Rota de fuga segura: {rota_fuga_segura}." if rota_fuga_segura else ""
 
-    eh_encosta = any(k in rotulo_topografia.lower() for k in ("encosta", "morro", "barreira", "talude"))
-    eh_canal = any(k in rotulo_topografia.lower() for k in ("canal", "rio", "córrego", "fundo de vale", "várzea"))
-    eh_mangue = any(k in rotulo_topografia.lower() for k in ("mangue", "estuário", "palafita", "maré"))
+    texto_base = f"{rotulo_topografia} {ecossistema}".lower()
+    eh_encosta = any(k in texto_base for k in ("encosta", "morro", "barreira", "talude"))
+    eh_canal = any(k in texto_base for k in ("canal", "rio", "córrego", "corrego", "fundo de vale", "várzea", "varzea"))
+    eh_mangue = any(k in texto_base for k in ("mangue", "estuário", "estuario", "palafita", "maré", "mare"))
 
     if nivel_risco == "CRÍTICO":
-        if eh_encosta:
+        if eh_encosta and not eh_canal:
             alerta_texto = (
                 f"Atenção urgente em {nome_exibicao}! Chuva muito forte ({chuva_mm:.1f} mm/h). "
-                f"Solo saturado e risco extremo de deslizamento de barreira. Desocupe cômodos próximos ao morro!"
+                f"Solo saturado e risco extremo de deslizamento de barreira na área de {rotulo_topografia}. "
+                f"Desocupe cômodos próximos ao morro!"
             )
             acao_texto = (
                 f"Saia da encosta imediatamente, avise seus vizinhos e procure o ponto de apoio: {ponto_apoio}.{rota_sugerida} "
                 f"Em emergência, ligue 199 (Defesa Civil)."
             )
+            cuidado_texto = (
+                "Não suba em barreiras durante a enxurrada, mantenha as lonas de proteção "
+                "e nunca jogue lixo ou escave o talude do morro."
+            )
         elif eh_canal:
             alerta_texto = (
-                f"Alerta máximo em {nome_exibicao}! Chuva intensa ({chuva_mm:.1f} mm/h). "
-                f"Risco iminente de transbordamento do canal e alagamento severo de vias."
+                f"Atenção urgente em {nome_exibicao}! Chuva intensa ({chuva_mm:.1f} mm/h). "
+                f"Risco imediato de transbordamento do canal e alagamento rápido de vias ({rotulo_topografia})."
             )
             acao_texto = (
                 f"Desligue o disjuntor geral de energia, não enfrente correntezas e siga para terreno alto em: {ponto_apoio}.{rota_sugerida} "
                 f"Em emergência, ligue 199 (Defesa Civil)."
             )
+            cuidado_texto = (
+                "Evite contato com a água de alagamento dos canais e mantenha distância das "
+                "margens dos rios, córregos e mangues durante a cheia."
+            )
         elif eh_mangue:
             alerta_texto = (
                 f"Atenção urgente na comunidade de {nome_exibicao}! Chuva forte ({chuva_mm:.1f} mm/h) conjugada com maré. "
-                f"Risco de invasão das águas sobre passarelas e pontes."
+                f"Risco imediato de alagamento e invasão das águas sobre passarelas e pontes."
             )
             acao_texto = (
                 f"Evacue as palafitas e áreas baixas imediatamente e abrigue-se em: {ponto_apoio}.{rota_sugerida} "
-                f"Em emergência, ligue 199."
+                f"Em emergência, ligue 199 (Defesa Civil)."
+            )
+            cuidado_texto = (
+                "Evite contato com a água de alagamento e mantenha distância das "
+                "margens do estuário e manguezais durante a maré alta."
             )
         else:
             alerta_texto = (
@@ -79,33 +95,36 @@ def traduzir_alerta_deterministico(
                 f"Saia de áreas vulneráveis imediatamente, avise seus vizinhos e procure abrigo seguro em: {ponto_apoio}.{rota_sugerida} "
                 f"Em emergência, ligue 199 (Defesa Civil)."
             )
+            cuidado_texto = (
+                "Não tente desentupir bueiros ou barreiras durante a enxurrada e mantenha "
+                "distância das margens dos rios e canais."
+            )
 
         return {
             "nivel_risco": "CRÍTICO",
             "alerta_humanizado": alerta_texto,
             "acao_segura": acao_texto,
-            "cuidado_ambiental": (
-                "Não tente desentupir bueiros ou barreiras durante a enxurrada e mantenha "
-                "distância das margens dos rios e canais."
-            ),
+            "cuidado_ambiental": cuidado_texto,
             "fonte_ia": "deterministico_validado",
         }
+
     elif nivel_risco == "MODERADO":
-        if eh_encosta:
+        if eh_encosta and not eh_canal:
             alerta_texto = (
                 f"Fique ligado em {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) infiltrando no morro. "
-                f"O solo da encosta começa a pesar e amolecer."
+                f"O solo da encosta começa a pesar e encharcar."
             )
             acao_texto = (
                 f"Observe rachaduras no chão ou muros e árvores inclinadas. Tenha rota pronta para: {ponto_apoio}.{rota_sugerida}"
             )
         elif eh_canal or eh_mangue:
             alerta_texto = (
-                f"Atenção em {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) com canais acumulando água rapidamente. "
-                f"Risco de poças profundas e refluxo de bueiros."
+                f"Atenção em {nome_exibicao}: chuva moderada ({chuva_mm:.1f} mm/h) com canais e margens de rio subindo rapidamente. "
+                f"Risco de poças profundas e refluxo de drenagem."
             )
             acao_texto = (
-                f"Eleve móveis e eletrodomésticos, guarde documentos em sacos plásticos e acompanhe o nível da água. Abrigo: {ponto_apoio}."
+                f"Eleve móveis e eletrodomésticos, guarde documentos em sacos plásticos e acompanhe o nível da água. "
+                f"Abrigo: {ponto_apoio}.{rota_sugerida}"
             )
         else:
             alerta_texto = (
@@ -127,6 +146,7 @@ def traduzir_alerta_deterministico(
             ),
             "fonte_ia": "deterministico_validado",
         }
+
     else:
         return {
             "nivel_risco": "BAIXO",
@@ -139,7 +159,7 @@ def traduzir_alerta_deterministico(
             ),
             "cuidado_ambiental": (
                 f"Proteger a área de {rotulo_topografia} hoje evita tragédias amanhã: descarte resíduos "
-                f"apenas nos pontos de coleta e ajude a preservar os morros e canais do Recife."
+                f"apenas nos pontos de coleta e ajude a preservar os morros, rios e manguezais do Recife."
             ),
             "fonte_ia": "deterministico_validado",
         }
@@ -159,8 +179,8 @@ async def traduzir_alerta_com_ia(
     """
     Converte dados meteorológicos técnicos em linguagem simples, acolhedora e
     hiperlocalizada para a microárea de Recife.
-    Se GEMINI_API_KEY estiver configurada, utiliza o Gemini 2.5 Flash com limite
-    estrito de tempo (< 2.5s) e guardrail determinístico de nível de risco.
+    Se GEMINI_API_KEY estiver configurada, utiliza o Gemini 2.5 Flash com cache em memória
+    e guardrail determinístico de nível de risco e ponto de apoio.
     Caso contrário, retorna imediatamente o fallback determinístico validado.
     """
     base_fallback = traduzir_alerta_deterministico(
@@ -179,6 +199,11 @@ async def traduzir_alerta_com_ia(
     if not api_key:
         return base_fallback
 
+    chave_local = microterritorio or territorio
+    chave_cache = (chave_local, round(chuva_mm, 1))
+    if chave_cache in _CACHE_TRADUCOES_IA:
+        return _CACHE_TRADUCOES_IA[chave_cache]
+
     nivel_risco = base_fallback["nivel_risco"]
     prompt = (
         "Você é o T.A.D.C. (Tradutor de Alertas da Defesa Civil do Recife), inspirado no "
@@ -192,7 +217,15 @@ async def traduzir_alerta_com_ia(
         f"- Rota de fuga: {rota_fuga_segura or 'Ponto de apoio municipal'}\n"
         f"- Precipitação atual: {chuva_mm:.1f} mm/h\n"
         f"- Nível de risco (FIXO E OBRIGATÓRIO): {nivel_risco}\n"
-        f"- Ponto de apoio oficial: {ponto_apoio}\n\n"
+        f"- Ponto de apoio oficial (OBRIGATÓRIO citar em acao_segura): {ponto_apoio}\n\n"
+        "Regras obrigatórias de segurança (Guardrails):\n"
+        f"1. Em alerta_humanizado, cite '{chave_local}', o volume '{chuva_mm:.1f} mm/h' e diferencie claramente "
+        "se o perigo local é deslizamento de barreira/encosta ou cheia de rio/canal/maré no manguezal. "
+        "Se o risco for CRÍTICO, inclua a palavra 'urgente'.\n"
+        f"2. Em acao_segura, dê uma instrução prática imediata adequada à topografia ({topografia_risco or ecossistema}) "
+        f"e cite explicitamente o abrigo '{ponto_apoio}', a rota de fuga '{rota_fuga_segura or ''}' e o telefone 199 da Defesa Civil.\n"
+        f"3. Em cuidado_ambiental, dê uma dica curta conectando a proteção de {ecossistema} (encostas, córregos ou mangues) "
+        "à prevenção de desastres na comunidade.\n\n"
         "Responda APENAS com um JSON válido contendo exatamente as chaves:\n"
         '{"alerta_humanizado": "...", "acao_segura": "...", "cuidado_ambiental": "..."}'
     )
@@ -207,7 +240,7 @@ async def traduzir_alerta_com_ia(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=2.5) as client:
+        async with httpx.AsyncClient(timeout=6.5) as client:
             resp = await client.post(url, json=body)
             resp.raise_for_status()
             data = resp.json()
@@ -219,15 +252,19 @@ async def traduzir_alerta_com_ia(
             )
             parsed = json.loads(text_content)
             if all(k in parsed for k in ("alerta_humanizado", "acao_segura", "cuidado_ambiental")):
-                return {
+                acao_segura = str(parsed["acao_segura"])
+                if ponto_apoio not in acao_segura:
+                    acao_segura = f"{acao_segura} Ponto de apoio oficial: {ponto_apoio}."
+                resultado_ia = {
                     "nivel_risco": nivel_risco,  # Guardrail determinístico imutável
                     "alerta_humanizado": str(parsed["alerta_humanizado"]),
-                    "acao_segura": str(parsed["acao_segura"]),
+                    "acao_segura": acao_segura,
                     "cuidado_ambiental": str(parsed["cuidado_ambiental"]),
                     "fonte_ia": "gemini_ia",
                 }
+                _CACHE_TRADUCOES_IA[chave_cache] = resultado_ia
+                return resultado_ia
     except Exception:
         pass
 
     return base_fallback
-

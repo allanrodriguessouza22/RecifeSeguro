@@ -8,11 +8,32 @@
   html {
     font-size: 16px;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.5;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Garante que Web Components / Componentes Angular ocupem bloco inteiro com espaçamento correto */
+  app-root,
+  app-mapa-territorial,
+  app-card-risco,
+  app-card-acao-apoio,
+  app-card-territorio-vivo {
+    display: block;
+    width: 100%;
+  }
+
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
   }
 
   /* Foco visível de alto contraste (Acessibilidade WCAG AA/AAA) */
@@ -65,5 +86,3 @@
 .marcador-pulso-critico {
   animation: pulso-marcador 2s infinite;
 }
-
-
