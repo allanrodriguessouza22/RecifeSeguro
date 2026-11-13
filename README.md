@@ -31,7 +31,7 @@ Um **PWA (Progressive Web App)** leve, acessível (WCAG AA/AAA), instalável no 
 * **Backend:** Python 3.11+ com **FastAPI**, Uvicorn, Pydantic v2, HTTPX (requisições assíncronas à Open-Meteo e Gemini API) e SQLAlchemy 2.0.
 * **Banco de Dados:** **PostgreSQL** (Neon / Vercel Postgres) via `DATABASE_URL`, com fallback automático para SQLite local e seed automático dos territórios de risco do Recife.
 * **Frontend:** **Angular 18+** (Standalone Components) + **Tailwind CSS** + **Angular Service Worker (`@angular/pwa`)** para instalação mobile e cache offline.
-* **Testes e CI:** `pytest` + `TestClient` (7 testes automatizados cobrindo health check, listagem de territórios, riscos baixo/moderado/crítico, simulação de crise e erro 404) integrados ao **GitHub Actions** (`.github/workflows/ci.yml`).
+* **Testes e CI:** `pytest` + `TestClient` (8 testes automatizados) integrados ao **GitHub Actions** (`.github/workflows/ci.yml`), com lint Python via Ruff, build de produção Angular e análise SAST via CodeQL.
 * **Deploy Unificado:** **Vercel** (`vercel.json` + `/api/index.py` Serverless Function Python + Build estático do PWA Angular).
 
 ```text
@@ -62,7 +62,7 @@ Hackaton-Aponti-/
 │   │   └── manifest.webmanifest  # Manifesto PWA
 │   ├── ngsw-config.json          # Configuração do Service Worker Offline
 │   └── angular.json
-├── .github/workflows/ci.yml      # Pipeline de Integração Contínua (Pytest + Build Angular)
+├── .github/workflows/ci.yml      # Pipeline CI (testes, lint, build e SAST)
 ├── vercel.json                   # Configuração de roteamento unificado na Vercel
 └── README.md
 ```
@@ -112,7 +112,20 @@ Acesse no navegador: `http://localhost:4200`
 
 ---
 
-## 6. Como Fazer Deploy na Vercel com PostgreSQL (Neon / Vercel Postgres)
+## 6. Integração Contínua (GitHub Actions)
+
+O workflow `.github/workflows/ci.yml` executa quatro verificações em pushes para `main`, `master` ou `develop` e em pull requests direcionados a `main` ou `master`:
+
+1. **Tests:** executa os testes automatizados do backend com `pytest`.
+2. **Lint:** verifica o código Python do backend com Ruff.
+3. **Build:** instala as dependências do frontend com `npm ci` e compila o Angular para produção.
+4. **SAST:** analisa o backend Python e o frontend TypeScript com CodeQL.
+
+Esse workflow valida as alterações, mas não publica a aplicação. O deploy de produção permanece configurado separadamente na Vercel, conforme a seção abaixo.
+
+---
+
+## 7. Como Fazer Deploy na Vercel com PostgreSQL (Neon / Vercel Postgres)
 
 1. Importe este repositório na **Vercel**.
 2. A Vercel detectará automaticamente o `vercel.json` na raiz:
@@ -125,14 +138,14 @@ Acesse no navegador: `http://localhost:4200`
 
 ---
 
-## 7. Auditoria Ética de IA e Validação Comunitária
+## 8. Auditoria Ética de IA e Validação Comunitária
 
-### 7.1. Onde a IA é utilizada
+### 8.1. Onde a IA é utilizada
 * A IA Generativa (**Google Gemini API**) atua na **tradução semântica e contextualização territorial**, transformando métricas meteorológicas frias (`mm/h`, `°C`, coordenadas e tipo de ecossistema) em mensagens empáticas, diretas e adaptadas à realidade de morros, córregos e áreas de mangue do Recife.
 
-### 7.2. Guardrails Determinísticos contra Alucinações (Segurança de Vida)
+### 8.2. Guardrails Determinísticos contra Alucinações (Segurança de Vida)
 * **Limitação identificada:** Modelos de linguagem (LLMs) não devem decidir sozinhos se uma chuva de `20 mm/h` em uma encosta íngreme representa risco baixo ou crítico, nem podem falhar caso a API externa de IA sofra latência durante uma tempestade.
 * **Correção implementada:** O cálculo do nível de risco (`BAIXO` `< 5mm/h`, `MODERADO` `5-14.9mm/h`, `CRÍTICO` `>= 15mm/h`) e o vínculo com a Escola Municipal / Ponto de Apoio oficial são **100% determinísticos no código (`classificar_nivel_risco`)**. Além disso, há um **fallback determinístico instantâneo (`< 50ms`)** caso a chave `GEMINI_API_KEY` não esteja configurada ou exceda o timeout de `2.5s`.
 
-### 7.3. Validação de Linguagem e Acessibilidade
+### 8.3. Validação de Linguagem e Acessibilidade
 * Interface construída com foco em leitura rápida (`< 3 segundos`), contraste elevado (WCAG AA/AAA), botão de **Leitura em Voz Alta (`window.speechSynthesis` em `pt-BR`)** para moradores com baixa escolaridade ou deficiência visual, e cache offline via Service Worker + `localStorage` para manter o último alerta acessível mesmo se a internet cair durante o temporal.
