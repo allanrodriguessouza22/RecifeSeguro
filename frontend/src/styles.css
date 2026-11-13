@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.5;
+  }
+
+  /* Foco visível de alto contraste (Acessibilidade WCAG AA/AAA) */
+  *:focus-visible {
+    outline: 3px solid #34d399;
+    outline-offset: 2px;
+  }
+}
+

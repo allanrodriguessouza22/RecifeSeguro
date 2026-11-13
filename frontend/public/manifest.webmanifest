@@ -1,0 +1,27 @@
+{
+  "name": "Recife Seguro — T.A.D.C. (Antena na Lama)",
+  "short_name": "Recife Seguro",
+  "description": "Tradutor de Alertas da Defesa Civil com Foco Territorial em Recife/PE — Protegendo rios, mangues e encostas.",
+  "theme_color": "#064e3b",
+  "background_color": "#020617",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
